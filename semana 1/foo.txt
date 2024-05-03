@@ -1,0 +1,26 @@
+Probemos la función esta_ordenada
+Lista: 1 2 3 
+Esta ordenada: 
+Longitud >= 2, procede al bucle
+n vale 1
+2 es mayor que 1. NO esta ordenada!
+0
+Ahora ordenamos
+
+Longitud >= 2, procede al bucle
+n vale 1
+2 es mayor que 1. NO esta ordenada!
+
+Longitud >= 2, procede al bucle
+n vale 1
+3 es mayor que 2. NO esta ordenada!
+
+Longitud >= 2, procede al bucle
+n vale 1
+n vale 2
+Lista: 3 2 1 
+Esta ordenada: 
+Longitud >= 2, procede al bucle
+n vale 1
+n vale 2
+1
