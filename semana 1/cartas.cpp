@@ -14,18 +14,16 @@ void mostrar_lista(int* lista, int longitud);
 int* botar_cartas(int* lista, int &longitud, int k);
 int* tomar_cartas(int* lista, int* nuevas_cartas, int &longitud, int k);
 int cuenta_cartas_distintas(int* lista, int longitud);
-int* cambios_cartas(int* lista, int longitud, int cartas_distintas);
+int* cambios_cartas(int* lista, int longitud, int cartas_distintas, int& longitud_cambios);
 int* conteo_cartas(int* lista, int longitud);
-int* calcular_nuevas_cartas(int* lista_reducida, int& longitud, int k);
-void procedimiento_intercambio(int* lista, int &longitud, int k);
+int* calcular_nuevas_cartas(int* lista_reducida, int longitud, int k);
+bool procedimiento_intercambio(int* lista, int &longitud, int k);
 
 int main(){
-    const int k = 3; //te lo da el problema
+    int k = 5; //te lo da el problema
     int longitud;
 
-
     int* lista = bienvenida(longitud);
-
     bool ordenada = esta_ordenada(lista, longitud);
     
     if (!ordenada){
@@ -34,14 +32,14 @@ int main(){
 
     mostrar_lista(lista, longitud);
     
-    procedimiento_intercambio(lista, longitud, k);
+    bool terminado = procedimiento_intercambio(lista, longitud, k);
 
     mostrar_lista(lista, longitud);
 
     return 0;
 }
 
-int* bienvenida(int &longitud){
+int* bienvenida(int &longitud){ // Genera el mazo de cartas
     cout << "Escriba la cantidad de elementos: ";
     cin >> longitud;
     int numero;
@@ -122,18 +120,18 @@ int* botar_cartas(int* lista, int &longitud, int k){//bota las k primeras cartas
     }
 
     if (permitido){
-        bool mazo_vacio = (k == longitud);
+        bool mazo_vacio = (k == longitud); //si se botan todas las cartas
         
-        if (!mazo_vacio){
+        if (!mazo_vacio){ //mazo no vacio
             nueva_lista = new int[longitud - k];
             for (int n = 0; n < (longitud - k); n++){
                 nueva_lista[n] = lista[k+n];
             }
             longitud = longitud - k;
         }
-        else {
+        else { //mazo vacio
             nueva_lista = new int[1];
-            nueva_lista[0] = -1;
+            nueva_lista[0] = -1; //solo es un place holder
             longitud = 1;
         }
 
@@ -147,7 +145,7 @@ int* tomar_cartas(int* lista, int* nuevas_cartas, int &longitud, int k){
 
     int* nueva_lista;
 
-    //caso borde, la lista botó todas
+    //caso borde, la lista botó todas en el paso anterior
     if (longitud == 1 && lista[0] == -1){
         nueva_lista = new int[k - 1];
         for (int n = 0; n < (k - 1); n++){
@@ -173,29 +171,29 @@ int* conteo_cartas(int* lista, int longitud){ //una lista con el
 //numero de la carta y el # de cartas de ese número
 
     int cartas_distintas = cuenta_cartas_distintas(lista, longitud);
-    int* cambios = cambios_cartas(lista, longitud, cartas_distintas); 
+    int longitud_cambios = cartas_distintas;
+    int* cambios = cambios_cartas(lista, longitud, cartas_distintas, longitud_cambios); 
 
     int* conteo = new int[2*cartas_distintas];
-    int* conjunto_cartas = new int[cartas_distintas + 1];
+    int* conjunto_cartas = new int[cartas_distintas];
 
     conjunto_cartas[0] = lista[0];
     for (int n = 1; n < cartas_distintas; n++){
         conjunto_cartas[n] = lista[cambios[n-1]];
     }
 
-    conteo[0] = conjunto_cartas[0];
-    conteo[1] = cambios[0];
-    for (int n = 2; n < 2*cartas_distintas - 2; n += 2){
-        conteo[n] = conjunto_cartas[(n/2)];
-        conteo[n+1] = (cambios[(n/2)]-cambios[(n/2)-1]);
+    if (cambios[0] == -1){ //no hay cambio todas son iguales
+        conteo[0] = conjunto_cartas[0];
+        conteo[1] = longitud;
     }
-
-    if (cartas_distintas > 1){
+    else{
+        for (int n = 0; n < 2*cartas_distintas-2; n += 2){
+            conteo[n] = conjunto_cartas[(n/2)];
+            conteo[n+1] = (cambios[(n/2)]-cambios[(n/2)-1]);
+        }
         conteo[2*cartas_distintas - 2] = conjunto_cartas[cartas_distintas - 1];
         conteo[2*cartas_distintas - 1] = longitud - cambios[cartas_distintas - 2];
     }
-    else
-        conteo[1] = longitud;
 
     return conteo;
 }
@@ -211,13 +209,14 @@ int cuenta_cartas_distintas(int* lista, int longitud){
     return cartas_distintas;
 }
 
-int* cambios_cartas(int* lista, int longitud, int cartas_distintas){
+int* cambios_cartas(int* lista, int longitud, int cartas_distintas, int& longitud_cambios){
     // lista con los indices donde hay cambios de cartas
         int* cambio_cartas;
 
-        if (cartas_distintas == 1){
+        if (cartas_distintas == 1){ //no hay cambios porque todas son iguales
             cambio_cartas = new int[1];
             cambio_cartas[0] = -1;
+            longitud_cambios = 1;
         }
         else{
             cambio_cartas = new int[cartas_distintas - 1]; //array con los indices
@@ -230,18 +229,22 @@ int* cambios_cartas(int* lista, int longitud, int cartas_distintas){
                     elementos++;
                 }
             }
+            longitud_cambios = cartas_distintas - 1;
         }
     return (cambio_cartas);
 }
 
-void procedimiento_intercambio(int* lista, int &longitud, int k){
+bool procedimiento_intercambio(int* lista, int &longitud, int k){
+    //el procedimiento como tal de cada ronda, de botar y tomar cartas nuevas
     int* nuevas_cartas;
+    bool terminado = false; //para saber si terminamos con esta ronda
 
     int* conteo = conteo_cartas(lista, longitud);
     if (conteo[1] < k) {
         // nuevas_cartas = new int[1];
         // nuevas_cartas[0] = -1; //caso borde
         cout << "No hay suficientes cartas iguales para descartar..." << endl;
+        terminado = true;
     }
     else{
         cout << "Botaremos " << k << " cartas." << endl;
@@ -254,18 +257,24 @@ void procedimiento_intercambio(int* lista, int &longitud, int k){
 
         cout << "Las tomamos"<<endl;
         lista = tomar_cartas(lista, nuevas_cartas, longitud, k);
+
+        if (longitud == k-1)
+            terminado = true;
     }
+
+    return terminado;
 }
 
-int* calcular_nuevas_cartas(int* lista_reducida, int& longitud, int k){
+int* calcular_nuevas_cartas(int* lista_reducida, int longitud, int k){
+    //para calcular cuales serán las cartas nuevas que debemos tomar
     int cartas_distintas = cuenta_cartas_distintas(lista_reducida, longitud);
     int* conteo = conteo_cartas(lista_reducida, longitud);
     cout << "Conteo ";
-    mostrar_lista(conteo, cartas_distintas);
+    mostrar_lista(conteo, 2*cartas_distintas);
     int* nuevas_cartas = new int[k-1];
 
-    int cartas_a_anadir = 0; //cartas a añadir
-    if (conteo[1] >= k){ //quedan mas de k cartas iguales 
+    int cartas_a_anadir = 0; // nro de cartas a añadir calculadas
+    if (conteo[1] >= k){ //quedan mas de k cartas iguales en la mano reducida
         cout << "Quedan más de " << k << " cartas, añadimos " << k-1 << " iguales" <<endl;
         for (int n = 0; n < (k-1) ; n++){   
             cout << "índice " << n << " ";
@@ -275,28 +284,38 @@ int* calcular_nuevas_cartas(int* lista_reducida, int& longitud, int k){
     }
     else{
         cout << "Completamos cartas"<<endl;
-        while (cartas_a_anadir < (k-1)){
-        //un bucle para añadir las cartas
+        int posicion = 0;
+    
+        for (int n = 0; n < 2*cartas_distintas; n+=2){
+            //recorremos conteo para saber cuales añadir
+            int numero_carta = conteo[n];
+            cout << "Nro de carta " << numero_carta << endl;
+            int cantidad_carta = conteo[n+1];
+            cout << "Cantidad de cartas " << cantidad_carta << endl;
 
-            for (int n = 0; n < 2*cartas_distintas; n+=2){
-                //recorremos la lista para saber cuales añadir
-                int numero_carta = conteo[n];
-                int cantidad_carta = conteo[n+1];
+            int cartas_que_faltan = 0; //para llegar a k}
+            int cartas_de_este_numero = 0;
 
-                int cartas_que_faltan = 0; //para llegar a k
+            if (cantidad_carta < k){
+                cartas_que_faltan = k-cantidad_carta; //cuentas le faltan para llegar a k
+                cout << "Faltan " << cartas_que_faltan << " para llegar a " << k;
+                cout << " cartas iguales de ese número" << endl;
 
-                if (cantidad_carta < k){
-                    cartas_que_faltan = k-cantidad_carta; //cuentas le faltan para llegar a k
-                    
-                    for (int m = 0; m < cartas_que_faltan; m++){
-                        if (cartas_a_anadir < (k-1)){
-                            nuevas_cartas[n] = numero_carta;
-                            cartas_a_anadir++;
-                        }
+                while (cartas_a_anadir < (k-1) && cartas_de_este_numero < cartas_que_faltan){
+                    nuevas_cartas[posicion] = numero_carta;
+                    cartas_a_anadir++;
+                    posicion++;
+                    cartas_de_este_numero++;
+                    cout << "Se añade un " << numero_carta << endl;
+                    cout << "Van " << cartas_a_anadir << " cartas calculadas" << endl;
+
+                    if (cartas_a_anadir == (k-1)){
+                        cout << "Calculadas todas las cartas" << endl;
                     }
                 }
             }
         }
+        cout << "Se calcularon " << cartas_a_anadir << " cartas a añadir" << endl;
     }
     cout << "Nuevas cartas: ";
     mostrar_lista(nuevas_cartas, cartas_a_anadir);
