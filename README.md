@@ -8,4 +8,4 @@ Hecho por Jesús Isea carnet 16-10553
 ### Semana 1
 * Problema `life.cpp` aceptado por SPOJ y funcional, link: https://www.spoj.com/status/TEST,jr_isp/
 
-* Problema `cartas.cpp` en progreso...
+* Problema `cartas.cpp`, funciona localmente pero no en CodeForces???
